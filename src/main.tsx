@@ -5,13 +5,16 @@ import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from "react-hot-toast"
 import { FightersProvider } from './contexts/FightersContext'
+import { ClubsProvider } from './contexts/ClubsContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <FightersProvider>
-        <App />
-        <Toaster position="top-right" />
+        <ClubsProvider>
+          <App />
+          <Toaster position="top-right" />
+        </ClubsProvider>
       </FightersProvider>
     </BrowserRouter>
   </StrictMode>,

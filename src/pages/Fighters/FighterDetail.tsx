@@ -1,14 +1,20 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useFighters } from '../../contexts/FightersContext'
+import { useClubs } from '../../contexts/ClubsContext'
 import { FighterStats } from '../../components/fighters/FighterStats'
 import { calculateAge, getWeightCategory } from '../../types/Fighter'
+import { getClubDisciplinesEmojis } from '../../utils/getDisciplineEmoji'
 
 export default function FighterDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getFighterById, deleteFighter } = useFighters()
+  const { clubs } = useClubs()
 
   const fighter = getFighterById(Number(id))
+  
+  // Get the club based on fighter.clubId
+  const club = fighter?.clubId ? clubs.find(c => c.id === fighter.clubId) : null
 
   if (!fighter) {
     return (
@@ -41,6 +47,14 @@ export default function FighterDetail() {
     }
   }
 
+  const handleResetData = () => {
+    if (confirm('Reset local data for Clubs/Fighters?')) {
+      localStorage.removeItem('fighters_data')
+      localStorage.removeItem('clubs_data')
+      window.location.reload()
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,6 +81,15 @@ export default function FighterDetail() {
               )}
             </div>
             <div className="flex gap-3">
+              {import.meta.env.DEV && (
+                <button
+                  onClick={handleResetData}
+                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm"
+                  aria-label="Reset local data"
+                >
+                  Reset Data
+                </button>
+              )}
               <Link
                 to={`/fighters/${fighter.id}/edit`}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -131,6 +154,85 @@ export default function FighterDetail() {
 
         {/* Stats Card */}
         <FighterStats record={fighter.record} />
+
+        {/* Club Card */}
+        <div className="bg-white rounded-lg shadow-md p-8 mt-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Club</h2>
+          
+          {fighter.clubId === null || fighter.clubId === undefined ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>Aucun club affilié</p>
+            </div>
+          ) : !club ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>Club introuvable (vérifier les données)</p>
+            </div>
+          ) : (
+            <Link
+              to={`/clubs/${club.id}`}
+              className="block rounded-xl border border-gray-200 p-4 hover:shadow-md hover:bg-gray-50 cursor-pointer transition"
+              role="button"
+              aria-label={`Voir le club ${club.name}`}
+            >
+              <div className="flex items-center gap-4">
+                {/* Logo placeholder */}
+                <div className="w-16 h-16 bg-linear-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shrink-0">
+                  {club.name.charAt(0)}
+                </div>
+                
+                {/* Club info */}
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{club.name}</h3>
+                  <p className="text-gray-600 flex items-center mb-2">
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    {club.city}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Disciplines:</span>
+                    <span className="text-lg">{getClubDisciplinesEmojis(club.disciplines)}</span>
+                    <span className="text-sm text-gray-700">
+                      {club.disciplines.slice(0, 3).join(', ')}
+                      {club.disciplines.length > 3 && '...'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Arrow icon */}
+                <svg
+                  className="w-6 h-6 text-gray-400 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   )

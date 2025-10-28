@@ -1,4 +1,4 @@
-export type Discipline = 'K1' | 'MMA' | 'Muay Thai' | 'Boxing' | 'Kickboxing'
+import type { Discipline } from './common'
 
 export type WeightCategory = 'Lightweight' | 'Middleweight' | 'Heavyweight'
 
@@ -13,7 +13,8 @@ export interface Fighter {
   firstName: string
   lastName: string
   nickname: string
-  club: string
+  club: string // Keep for display purposes
+  clubId: number | null // Primary relation to club
   birthDate: string // ISO format: YYYY-MM-DD
   height: number // in cm
   weight: number // in kg

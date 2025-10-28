@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Fighter } from '../../types/Fighter'
 import { getWeightCategory } from '../../types/Fighter'
+import { useClubs } from '../../contexts/ClubsContext'
+import { ALL_DISCIPLINES } from '../../constants/disciplines'
 
 interface FighterFormProps {
   initialData?: Fighter
@@ -16,11 +18,14 @@ export const FighterForm = ({
   onCancel,
   submitLabel = 'Save Fighter',
 }: FighterFormProps) => {
+  const { clubs } = useClubs()
+
   const [formData, setFormData] = useState({
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
     nickname: initialData?.nickname || '',
     club: initialData?.club || '',
+    clubId: initialData?.clubId ?? null,
     birthDate: initialData?.birthDate || '',
     height: initialData?.height || 0,
     weight: initialData?.weight || 0,
@@ -52,6 +57,14 @@ export const FighterForm = ({
       }))
     } else if (name === 'height' || name === 'weight') {
       setFormData(prev => ({ ...prev, [name]: parseFloat(value) || 0 }))
+    } else if (name === 'clubId') {
+      const clubIdValue = value === '' ? null : parseInt(value)
+      const selectedClub = clubs.find(c => c.id === clubIdValue)
+      setFormData(prev => ({ 
+        ...prev, 
+        clubId: clubIdValue,
+        club: selectedClub?.name || ''
+      }))
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
@@ -132,19 +145,29 @@ export const FighterForm = ({
         <h3 className="text-lg font-bold text-gray-900 mb-4">Club & Discipline</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="club" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="clubId" className="block text-sm font-medium text-gray-700 mb-1">
               Club *
             </label>
-            <input
-              type="text"
-              id="club"
-              name="club"
-              value={formData.club}
+            <select
+              id="clubId"
+              name="clubId"
+              value={formData.clubId || ''}
               onChange={handleChange}
               required
-              placeholder="e.g., Scorpions Iași"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            >
+              <option value="">Select a club</option>
+              {clubs.map(club => (
+                <option key={club.id} value={club.id}>
+                  {club.name} - {club.city}
+                </option>
+              ))}
+            </select>
+            {formData.clubId && (
+              <p className="mt-1 text-sm text-gray-600">
+                Selected: <span className="font-medium">{formData.club}</span>
+              </p>
+            )}
           </div>
 
           <div>
@@ -159,11 +182,11 @@ export const FighterForm = ({
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="K1">K1</option>
-              <option value="Kickboxing">Kickboxing</option>
-              <option value="Muay Thai">Muay Thai</option>
-              <option value="MMA">MMA</option>
-              <option value="Boxing">Boxing</option>
+              {ALL_DISCIPLINES.map(discipline => (
+                <option key={discipline} value={discipline}>
+                  {discipline}
+                </option>
+              ))}
             </select>
           </div>
         </div>

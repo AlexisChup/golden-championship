@@ -8,8 +8,7 @@ export default function FighterEditForm() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getFighterById, updateFighter, addFighter } = useFighters()
-
-  const isNew = id === 'new'
+  const isNew = id === undefined || id === 'new'
   const fighter = isNew ? undefined : getFighterById(Number(id))
 
   if (!isNew && !fighter) {
@@ -35,13 +34,14 @@ export default function FighterEditForm() {
 
   const handleSubmit = (data: Omit<Fighter, 'id'>) => {
     if (isNew) {
-      addFighter(data)
+      const newId = addFighter(data)
       toast.success('Fighter added successfully!')
+      navigate(`/fighters/${newId}`)
     } else {
       updateFighter(Number(id), data)
       toast.success('Fighter updated successfully!')
+      navigate(`/fighters/${id}`)
     }
-    navigate('/fighters')
   }
 
   const handleCancel = () => {

@@ -1,17 +1,26 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useFighters } from '../../contexts/FightersContext'
+import { useClubs } from '../../contexts/ClubsContext'
 import { FighterCard } from '../../components/fighters/FighterCard'
-import { getUniqueDisciplines, getUniqueClubs } from '../../data/fightersData'
+import { getUniqueDisciplines } from '../../data/fightersData'
 
 export default function FightersList() {
   const { fighters } = useFighters()
+  const { clubs } = useClubs()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>('all')
   const [selectedClub, setSelectedClub] = useState<string>('all')
 
   const disciplines = getUniqueDisciplines()
-  const clubs = getUniqueClubs()
+
+  const handleResetData = () => {
+    if (confirm('Reset local data for Clubs/Fighters?')) {
+      localStorage.removeItem('fighters_data')
+      localStorage.removeItem('clubs_data')
+      window.location.reload()
+    }
+  }
 
   const filteredFighters = useMemo(() => {
     return fighters.filter(fighter => {
@@ -35,10 +44,31 @@ export default function FightersList() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Fighters Directory</h1>
-          <p className="text-gray-600">
-            Browse and manage all registered fighters in the championship
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Fighters Directory</h1>
+              <p className="text-gray-600">
+                Browse and manage all registered fighters in the championship
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {import.meta.env.DEV && (
+                <button
+                  onClick={handleResetData}
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
+                  aria-label="Reset local data"
+                >
+                  Reset Data
+                </button>
+              )}
+              <Link
+                to="/fighters/new"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                + Add Fighter
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
@@ -92,8 +122,8 @@ export default function FightersList() {
               >
                 <option value="all">All Clubs</option>
                 {clubs.map(club => (
-                  <option key={club} value={club}>
-                    {club}
+                  <option key={club.id} value={club.name}>
+                    {club.name}
                   </option>
                 ))}
               </select>
