@@ -4,12 +4,15 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from "react-hot-toast"
+import { FightersProvider } from './contexts/FightersContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
-      <Toaster position="top-right" />
+      <FightersProvider>
+        <App />
+        <Toaster position="top-right" />
+      </FightersProvider>
     </BrowserRouter>
   </StrictMode>,
 )
