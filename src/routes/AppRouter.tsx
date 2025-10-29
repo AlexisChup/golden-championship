@@ -1,9 +1,8 @@
-  import { Routes, Route } from "react-router-dom"
+  import { Routes, Route, Navigate } from "react-router-dom"
 
   // Pages publiques
   import Home from "../pages/Home"
   import About from "../pages/About"
-  import Competitions from "../pages/Competitions"
   import News from "../pages/News"
   import Contact from "../pages/Contact"
 
@@ -16,6 +15,13 @@
   import ClubsList from "../pages/Clubs/ClubsList"
   import ClubDetail from "../pages/Clubs/ClubDetail"
   import ClubEditForm from "../pages/Clubs/ClubEditForm"
+
+  // Pages Competitions
+  import CompetitionsList from "../pages/Competitions/CompetitionsList"
+  import CompetitionDetail from "../pages/Competitions/CompetitionDetail"
+  import CompetitionGeneralInfo from "../pages/Competitions/CompetitionGeneralInfo"
+  import CompetitionFightersTab from "../pages/Competitions/CompetitionFightersTab"
+  import CompetitionEditForm from "../pages/Competitions/CompetitionEditForm"
 
   // Pages d'authentification
   import Login from "../pages/Login"
@@ -35,7 +41,6 @@
         {/* Pages publiques */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/competitions" element={<Competitions />} />
         <Route path="/news" element={<News />} />
         <Route path="/contact" element={<Contact />} />
         
@@ -50,6 +55,16 @@
         <Route path="/clubs/new" element={<ClubEditForm />} />
         <Route path="/clubs/:id" element={<ClubDetail />} />
         <Route path="/clubs/:id/edit" element={<ClubEditForm />} />
+        
+        {/* Competitions routes */}
+        <Route path="/competitions" element={<CompetitionsList />} />
+        <Route path="/competitions/new" element={<CompetitionEditForm />} />
+        <Route path="/competitions/:id" element={<CompetitionDetail />}>
+          <Route index element={<Navigate to="general-info" replace />} />
+          <Route path="general-info" element={<CompetitionGeneralInfo />} />
+          <Route path="fighters" element={<CompetitionFightersTab />} />
+        </Route>
+        <Route path="/competitions/:id/edit" element={<CompetitionEditForm />} />
         
         {/* Authentification */}
         <Route path="/login" element={<Login />} />

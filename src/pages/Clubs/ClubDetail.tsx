@@ -63,6 +63,7 @@ export default function ClubDetail() {
     if (confirm('Reset local data for Clubs/Fighters?')) {
       localStorage.removeItem('fighters_data')
       localStorage.removeItem('clubs_data')
+      localStorage.removeItem('competitions_data')
       window.location.reload()
     }
   }
