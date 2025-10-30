@@ -21,6 +21,7 @@
   import CompetitionDetail from "../pages/Competitions/CompetitionDetail"
   import CompetitionGeneralInfo from "../pages/Competitions/CompetitionGeneralInfo"
   import CompetitionFightersTab from "../pages/Competitions/CompetitionFightersTab"
+  import CompetitionMatchesTab from "../pages/Competitions/CompetitionMatchesTab"
   import CompetitionEditForm from "../pages/Competitions/CompetitionEditForm"
 
   // Pages d'authentification
@@ -63,6 +64,7 @@
           <Route index element={<Navigate to="general-info" replace />} />
           <Route path="general-info" element={<CompetitionGeneralInfo />} />
           <Route path="fighters" element={<CompetitionFightersTab />} />
+          <Route path="matches" element={<CompetitionMatchesTab />} />
         </Route>
         <Route path="/competitions/:id/edit" element={<CompetitionEditForm />} />
         

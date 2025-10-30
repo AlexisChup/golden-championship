@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast"
 import { FightersProvider } from './contexts/FightersContext'
 import { ClubsProvider } from './contexts/ClubsContext'
 import { CompetitionsProvider } from './contexts/CompetitionsContext'
+import { MatchesProvider } from './contexts/MatchesContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,8 +15,10 @@ createRoot(document.getElementById('root')!).render(
       <FightersProvider>
         <ClubsProvider>
           <CompetitionsProvider>
-            <App />
-            <Toaster position="top-right" />
+            <MatchesProvider>
+              <App />
+              <Toaster position="top-right" />
+            </MatchesProvider>
           </CompetitionsProvider>
         </ClubsProvider>
       </FightersProvider>

@@ -5,6 +5,8 @@ import { useFighters } from '../../contexts/FightersContext'
 import type { Competition, CompetitionFighter } from '../../types/Competition'
 import type { Discipline } from '../../types/common'
 import { ALL_DISCIPLINES } from '../../constants/disciplines'
+import { Button } from '../../components/ui/Button'
+import { Badge } from '../../components/ui/Badge'
 import toast from 'react-hot-toast'
 
 export default function CompetitionFightersTab() {
@@ -53,12 +55,14 @@ export default function CompetitionFightersTab() {
         <h3 className="text-lg font-bold text-gray-900">
           Fighter List ({competition.fighters.length})
         </h3>
-        <button
+        <Button
+          variant={showAddFighter ? 'secondary' : 'primary'}
+          size="md"
           onClick={() => setShowAddFighter(!showAddFighter)}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          className={showAddFighter ? '' : 'bg-green-600 hover:bg-green-700'}
         >
           {showAddFighter ? 'Cancel' : '+ Add Fighter'}
-        </button>
+        </Button>
       </div>
 
       {/* Add Fighter Form */}
@@ -105,12 +109,9 @@ export default function CompetitionFightersTab() {
             </div>
 
             <div className="flex items-end">
-              <button
-                type="submit"
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
+              <Button type="submit" variant="primary" size="md" className="w-full">
                 Add
-              </button>
+              </Button>
             </div>
           </div>
         </form>
@@ -165,9 +166,9 @@ export default function CompetitionFightersTab() {
                       {fighterData.club}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      <Badge variant="info" className="bg-blue-100 text-blue-800">
                         {fighter.discipline}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button

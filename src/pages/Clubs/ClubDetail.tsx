@@ -64,6 +64,7 @@ export default function ClubDetail() {
       localStorage.removeItem('fighters_data')
       localStorage.removeItem('clubs_data')
       localStorage.removeItem('competitions_data')
+      localStorage.removeItem('matches')
       window.location.reload()
     }
   }
