@@ -10,7 +10,7 @@ import type { Club } from '../types/Club'
 import type { Competition } from '../types/Competition'
 import type { Bracket, BracketMetadata } from '../types/Bracket'
 import type { Match } from '../types/Match'
-import { clubsRepo, fightersRepo, competitionsRepo, bracketsRepo } from '../data/repositories'
+import { clubsRepo, fightersRepo, competitionsRepo, bracketsRepo, matchesRepo } from '../data/repositories'
 
 interface RepositoryContextType {
   // Clubs
@@ -197,7 +197,8 @@ export const RepositoryProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const getBracketMatches = useCallback((competitionId: number, bracketId: number) => {
-    return bracketsRepo.getMatches(competitionId, bracketId)
+    // Matches are now in matchesRepository, not bracketsRepo
+    return matchesRepo.listByBracket(competitionId, bracketId)
   }, [])
 
   const createBracket = useCallback((

@@ -4,7 +4,7 @@ import type { Competition } from '../../types/Competition'
 import type { BracketMetadata, Matches } from '../../types/Bracket'
 import { useFighters, useBrackets } from '../../contexts/RepositoryContext'
 import BracketList from './components/BracketList'
-import BracketBuilder from './components/BracketBuilder'
+import { BracketBuilder } from './components/BracketBuilder'
 import BracketViewer from './components/BracketViewer'
 import toast from 'react-hot-toast'
 

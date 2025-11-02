@@ -11,16 +11,14 @@ import {
 } from '../constants/enums'
 import { createClub, createFighter, createCompetition } from './factories'
 import { clubsRepo, fightersRepo, competitionsRepo, bracketsRepo } from './repositories'
+import { matchesRepo } from './matchesRepository'
 import { validateGraph } from './validation'
 import {
   type SeedConfig as BracketSeedConfig,
   DEFAULT_SEED_CONFIG,
   SeededRandom,
 } from './seedConfig'
-import {
-  synthesizeBracketsForCompetition,
-  diagnoseNoBracketReasons,
-} from './bracketSynthesis'
+import { synthesizeBracketsForCompetition, diagnoseNoBracketReasons } from './bracketSynthesis'
 
 /**
  * Configuration for seed generation
@@ -62,12 +60,15 @@ export const clearAllData = (): void => {
   // Delete all fighters
   fighters.forEach((fighter) => fightersRepo.delete(fighter.id))
 
-  // Delete all competitions and their brackets
+  // Delete all competitions, brackets, and matches
   competitions.forEach((comp) => {
     const brackets = bracketsRepo.getAllForCompetition(comp.id)
     brackets.forEach((bracket) => bracketsRepo.delete(comp.id, bracket.id))
     competitionsRepo.delete(comp.id)
   })
+
+  // Clear all matches from matchesRepository
+  matchesRepo.readAll().forEach((match) => matchesRepo.remove(match.id))
 
   console.log('✓ All data cleared')
 }
@@ -199,7 +200,7 @@ export const seedAll = (config: Partial<SeedConfig> = {}): void => {
         })
       }
     })
-
+    
     const ratio = competitions.length > 0 ? competitionsWithBrackets / competitions.length : 0
 
     console.log(`  ├─ Total brackets: ${totalBracketsCreated} (attempted ${totalBracketsAttempted})`)

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import type { Match } from '../../types/Match'
 import { getMatchStateLabel, getMatchStateColor } from '../../types/Match'
 import { useFighters } from '../../contexts/RepositoryContext'
-import { Edit, Trash2, Trophy, Calendar, MapPin } from 'lucide-react'
+import { Edit, Trash2, Trophy, Calendar } from 'lucide-react'
 
 type MatchCardProps = {
   match: Match
@@ -16,15 +16,12 @@ export const MatchCard = ({ match, onEdit, onDelete }: MatchCardProps) => {
   const participant1 = match.participants[0]
   const participant2 = match.participants[1]
 
-  console.log("match : " + JSON.stringify(match, null, 2));
-  
+  // Get fighter details using fighterId
+  const fighter1 = participant1.fighterId ? getFighterById(participant1.fighterId) : null
+  const fighter2 = participant2.fighterId ? getFighterById(participant2.fighterId) : null
 
-  // Get fighter details for participant names if needed
-  const fighter1 = getFighterById(Number(participant1.id))
-  const fighter2 = getFighterById(Number(participant2.id))
-
-  const displayName1 = participant1.name || fighter1?.firstName + ' ' + fighter1?.lastName || 'Unknown Fighter'
-  const displayName2 = participant2.name || fighter2?.firstName + ' ' + fighter2?.lastName || 'Unknown Fighter'
+  const displayName1 = fighter1 ? `${fighter1.firstName} ${fighter1.lastName}`.trim() : 'TBD'
+  const displayName2 = fighter2 ? `${fighter2.firstName} ${fighter2.lastName}`.trim() : 'TBD'
 
   const stateColors = getMatchStateColor(match.state)
   const stateLabel = getMatchStateLabel(match.state)
@@ -35,11 +32,11 @@ export const MatchCard = ({ match, onEdit, onDelete }: MatchCardProps) => {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold text-gray-800">
-            {match.name}
+            {match.name || `Match #${match.id}`}
           </h3>
-          {match.tournamentRoundText && (
+          {match.round !== null && (
             <span className="text-sm text-gray-500">
-              (Round {match.tournamentRoundText})
+              (Round {match.round})
             </span>
           )}
         </div>
@@ -54,12 +51,16 @@ export const MatchCard = ({ match, onEdit, onDelete }: MatchCardProps) => {
         <div className={`flex-1 text-center p-3 rounded-lg ${participant1.isWinner ? 'bg-green-50 border-2 border-green-500' : 'bg-gray-50'}`}>
           <div className="flex items-center justify-center gap-2 mb-1">
             {participant1.isWinner && <Trophy className="w-4 h-4 text-green-600" />}
-            <Link
-              to={`/fighters/${participant1.id}`}
-              className="font-semibold text-gray-800 hover:text-blue-600 transition-colors"
-            >
-              {displayName1}
-            </Link>
+            {participant1.fighterId ? (
+              <Link
+                to={`/fighters/${participant1.fighterId}`}
+                className="font-semibold text-gray-800 hover:text-blue-600 transition-colors"
+              >
+                {displayName1}
+              </Link>
+            ) : (
+              <span className="font-semibold text-gray-400">{displayName1}</span>
+            )}
           </div>
           {participant1.resultText && (
             <span className="text-xs text-gray-600">{participant1.resultText}</span>
@@ -75,12 +76,16 @@ export const MatchCard = ({ match, onEdit, onDelete }: MatchCardProps) => {
         <div className={`flex-1 text-center p-3 rounded-lg ${participant2.isWinner ? 'bg-green-50 border-2 border-green-500' : 'bg-gray-50'}`}>
           <div className="flex items-center justify-center gap-2 mb-1">
             {participant2.isWinner && <Trophy className="w-4 h-4 text-green-600" />}
-            <Link
-              to={`/fighters/${participant2.id}`}
-              className="font-semibold text-gray-800 hover:text-blue-600 transition-colors"
-            >
-              {displayName2}
-            </Link>
+            {participant2.fighterId ? (
+              <Link
+                to={`/fighters/${participant2.fighterId}`}
+                className="font-semibold text-gray-800 hover:text-blue-600 transition-colors"
+              >
+                {displayName2}
+              </Link>
+            ) : (
+              <span className="font-semibold text-gray-400">{displayName2}</span>
+            )}
           </div>
           {participant2.resultText && (
             <span className="text-xs text-gray-600">{participant2.resultText}</span>
@@ -88,50 +93,27 @@ export const MatchCard = ({ match, onEdit, onDelete }: MatchCardProps) => {
         </div>
       </div>
 
-      {/* Meta Information */}
-      {match.meta && (
-        <div className="border-t pt-3 mb-3">
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {match.meta.ruleType && (
-              <div className="flex items-center gap-1 text-gray-600">
-                <span className="font-medium">Rules:</span> {match.meta.ruleType}
-              </div>
-            )}
-            {match.meta.weightClass && (
-              <div className="flex items-center gap-1 text-gray-600">
-                <span className="font-medium">Weight:</span> {match.meta.weightClass}
-              </div>
-            )}
-            {match.meta.gender && (
-              <div className="flex items-center gap-1 text-gray-600">
-                <span className="font-medium">Gender:</span> {match.meta.gender}
-              </div>
-            )}
-            {match.meta.ageGroup && (
-              <div className="flex items-center gap-1 text-gray-600">
-                <span className="font-medium">Age:</span> {match.meta.ageGroup}
-              </div>
-            )}
-            {match.meta.ring && (
-              <div className="flex items-center gap-1 text-gray-600">
-                <MapPin className="w-3 h-3" />
-                {match.meta.ring}
-              </div>
-            )}
-            {match.startTime && (
-              <div className="flex items-center gap-1 text-gray-600">
-                <Calendar className="w-3 h-3" />
-                {new Date(match.startTime).toLocaleString()}
-              </div>
-            )}
-          </div>
-          {match.meta.notes && (
-            <div className="mt-2 text-sm text-gray-600">
-              <span className="font-medium">Notes:</span> {match.meta.notes}
+      {/* Match Information */}
+      <div className="border-t pt-3 mb-3">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          {match.startTime && (
+            <div className="flex items-center gap-1 text-gray-600">
+              <Calendar className="w-3 h-3" />
+              {new Date(match.startTime).toLocaleString()}
+            </div>
+          )}
+          {match.outcome && (
+            <div className="flex items-center gap-1 text-gray-600">
+              <span className="font-medium">Outcome:</span> {match.outcome.replace('_', ' ')}
             </div>
           )}
         </div>
-      )}
+        {match.notes && (
+          <div className="mt-2 text-sm text-gray-600">
+            <span className="font-medium">Notes:</span> {match.notes}
+          </div>
+        )}
+      </div>
 
       {/* Actions */}
       <div className="flex gap-2 pt-3 border-t">

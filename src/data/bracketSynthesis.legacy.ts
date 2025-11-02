@@ -17,8 +17,8 @@ import {
 } from '../constants/enums'
 import { createFighter } from './factories'
 import { fightersRepo, bracketsRepo, clubsRepo, competitionsRepo } from './repositories'
-import { matchesRepo } from './matchesRepository'
-import { generateSingleEliminationBracket } from '../utils/bracketGeneratorV2'
+// Legacy bracket generator removed - using bracketGeneratorV2 now
+// import { generateSingleEliminationBracket, verifyBracketChain } from '../utils/bracketGenerator.legacy'
 
 /**
  * Division key for grouping fighters
@@ -284,9 +284,30 @@ export const synthesizeBracketsForCompetition = (
     // Choose bracket size
     const bracketSize = chooseBracketSize(allFighterIds.length, config.preferredBracketSizes)
 
-    // Generate matches using bracketGeneratorV2
+    // Build fighter names map
+    const fighterNames = new Map<number, string>()
+    const allFighters = fightersRepo.getByIds(allFighterIds)
+    allFighters.forEach((f) => {
+      fighterNames.set(f.id, `${f.firstName} ${f.lastName}`)
+    })
+
+    // Generate matches
     try {
-      // Create bracket metadata FIRST to get unique bracketId
+      const matches = generateSingleEliminationBracket({
+        competitionId,
+        bracketId: result.created + 1, // Temporary ID
+        fighterIds: allFighterIds,
+        fighterNames,
+        seedMethod: 'random',
+        randomSeed: rng.int(1, 1000000),
+      })
+
+      if (matches.length === 0) {
+        result.reasons[divisionKeyStr] = ['Match generation returned empty array']
+        continue
+      }
+
+      // Create bracket metadata
       const division: BracketDivision = {
         ageGroup: divisionKey.ageGroup,
         discipline: divisionKey.discipline,
@@ -294,31 +315,23 @@ export const synthesizeBracketsForCompetition = (
         gender: divisionKey.gender,
       }
 
-      const bracketData = {
+      const bracket = {
         division,
         fighterIds: allFighterIds,
         seedMethod: 'random' as const,
         status: 'published' as const,
       }
 
-      // Create bracket metadata (without matches initially)
-      const createdBracket = bracketsRepo.create(competitionId, bracketData, [])
-      
-      // Now generate matches with the actual bracketId
-      const { matches } = generateSingleEliminationBracket({
-        competitionId,
-        bracketId: createdBracket.id,
-        fighterIds: allFighterIds,
-        seedMethod: 'random',
-      })
-
-      if (matches.length === 0) {
-        result.reasons[divisionKeyStr] = ['Match generation returned empty array']
-        // Clean up bracket
-        bracketsRepo.delete(competitionId, createdBracket.id)
-        continue
+      // Validate bracket chain before persisting
+      const validation = verifyBracketChain(matches)
+      if (!validation.ok) {
+        console.error(`Bracket validation failed for division ${divisionKeyStr}:`)
+        validation.errors.forEach((err: string) => console.error(`  - ${err}`))
+        throw new Error(`Bracket validation failed: ${validation.errors.join('; ')}`)
       }
-      
+
+      // Persist bracket and matches
+      bracketsRepo.create(competitionId, bracket, matches)
       result.created++
 
       if (!result.reasons[divisionKeyStr]) {
@@ -412,7 +425,7 @@ export const diagnoseNoBracketReasons = (
   // Check for existing brackets
   const existingBrackets = bracketsRepo.getAllForCompetition(competitionId)
   existingBrackets.forEach((bracket) => {
-    const matches = matchesRepo.listByBracket(competitionId, bracket.id)
+    const matches = bracketsRepo.getMatches(competitionId, bracket.id)
     if (matches.length === 0) {
       reasons.push({
         category: 'PERSISTENCE_CONFLICT',

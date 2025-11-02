@@ -2,7 +2,7 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { seedDev, seedDemo } from '../../data/seed'
 import { validateGraph } from '../../data/validation'
-import { clubsRepo, fightersRepo, competitionsRepo, bracketsRepo } from '../../data/repositories'
+import { clubsRepo, fightersRepo, competitionsRepo, bracketsRepo, matchesRepo } from '../../data/repositories'
 import { PageHeader } from './DataManagement/PageHeader'
 import { WarningBanner } from './DataManagement/WarningBanner'
 import { DevSeedCard } from './DataManagement/DevSeedCard'
@@ -93,7 +93,8 @@ export default function DataManagement() {
       const brackets = bracketsRepo.getAllForCompetition(comp.id)
       totalBrackets += brackets.length
       brackets.forEach(bracket => {
-        const matches = bracketsRepo.getMatches(comp.id, bracket.id)
+        // Matches are now in matchesRepository
+        const matches = matchesRepo.listByBracket(comp.id, bracket.id)
         totalMatches += matches.length
       })
     })

@@ -10,6 +10,9 @@ import type { Competition } from '../types/Competition'
 import type { Bracket, BracketMetadata } from '../types/Bracket'
 import type { Match } from '../types/Match'
 
+// Re-export matchesRepo from its dedicated file
+export { matchesRepo } from './matchesRepository'
+
 // ============================================================================
 // STORAGE KEYS
 // ============================================================================

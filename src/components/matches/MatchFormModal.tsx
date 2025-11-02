@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import type { Match } from '../../types/Match'
-import { MatchForm } from './MatchForm'
+
+// MatchForm.legacy removed - component stub only
 
 type MatchFormModalProps = {
   competitionUuid: string
@@ -11,18 +12,11 @@ type MatchFormModalProps = {
 }
 
 export const MatchFormModal = ({
-  competitionUuid,
   match,
   isOpen,
   onClose,
-  onSubmit,
 }: MatchFormModalProps) => {
   if (!isOpen) return null
-
-  const handleSubmit = (matchData: Omit<Match, 'id'>) => {
-    onSubmit(matchData)
-    onClose()
-  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -50,13 +44,17 @@ export const MatchFormModal = ({
 
           {/* Content */}
           <div className="px-6 py-4">
-            <MatchForm
-              competitionUuid={competitionUuid}
-              initialData={match || undefined}
-              onSubmit={handleSubmit}
-              onCancel={onClose}
-              submitLabel={match ? 'Update Match' : 'Create Match'}
-            />
+            <p className="text-gray-600 text-center py-8">
+              Match form temporarily unavailable.
+              <br />
+              Use the Competition Matches tab to create matches.
+            </p>
+            <button
+              onClick={onClose}
+              className="w-full mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
