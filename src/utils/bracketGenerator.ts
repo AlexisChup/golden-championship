@@ -206,49 +206,54 @@ export const generateSingleEliminationBracket = (options: GenerateBracketOptions
   
   // Seed fighters
   const seededFighters = seedFighters(fighterIds, fighterNames, seedMethod, randomSeed)
-  const bracketSize = seededFighters.length
+  const bracketSize = seededFighters.length // Already a power of 2
   
-  // Calculate number of rounds
+  // Calculate number of rounds: R = log2(S)
   const totalRounds = Math.log2(bracketSize)
+  
+  // Build round metadata: roundStartId[r] = first match ID in round r
+  // Round 0 (first): matches 1..M0 where M0 = S/2
+  // Round 1: matches (M0+1)..(M0+M1) where M1 = M0/2
+  // ...
+  // Round R-1 (final): single match with last ID
+  const roundStartId: number[] = []
+  const roundCount: number[] = []
+  
+  let nextId = 1
+  for (let r = 0; r < totalRounds; r++) {
+    const matchCount = bracketSize / Math.pow(2, r + 1)
+    roundStartId[r] = nextId
+    roundCount[r] = matchCount
+    nextId += matchCount
+  }
   
   // Generate all matches
   const matches: BracketMatch[] = []
-  let matchId = 1
   
-  // Build from first round to final
-  const roundMatchCounts: number[] = []
-  for (let round = 1; round <= totalRounds; round++) {
-    roundMatchCounts.push(bracketSize / Math.pow(2, round))
-  }
-  
-  // Track match IDs by round and position for linking
-  const matchIdsByRound: number[][] = []
-  
-  for (let round = 0; round < totalRounds; round++) {
-    const matchCount = roundMatchCounts[round]
-    const roundMatchIds: number[] = []
+  for (let r = 0; r < totalRounds; r++) {
+    const matchCount = roundCount[r]
+    const isLastRound = r === totalRounds - 1
     
-    for (let matchIndex = 0; matchIndex < matchCount; matchIndex++) {
-      const currentMatchId = matchId++
-      roundMatchIds.push(currentMatchId)
+    for (let i = 0; i < matchCount; i++) {
+      const currentMatchId = roundStartId[r] + i
       
-      // Determine nextMatchId
+      // Determine nextMatchId using sibling → parent mapping
       let nextMatchId: number | null = null
-      if (round < totalRounds - 1) {
-        // Link to parent match in next round
-        const nextRoundMatchIndex = Math.floor(matchIndex / 2)
-        const nextRoundStartId = matches.length + matchCount + 1
-        nextMatchId = nextRoundStartId + nextRoundMatchIndex
+      if (!isLastRound) {
+        // Parent index in next round: p = floor(i/2)
+        const parentIndex = Math.floor(i / 2)
+        // Parent match ID in next round
+        nextMatchId = roundStartId[r + 1] + parentIndex
       }
       
       // Create participants
       let participant1: MatchParticipant
       let participant2: MatchParticipant
       
-      if (round === 0) {
+      if (r === 0) {
         // First round: use seeded fighters
-        const fighter1Index = matchIndex * 2
-        const fighter2Index = matchIndex * 2 + 1
+        const fighter1Index = i * 2
+        const fighter2Index = i * 2 + 1
         
         const fighter1 = seededFighters[fighter1Index]
         const fighter2 = seededFighters[fighter2Index]
@@ -267,9 +272,9 @@ export const generateSingleEliminationBracket = (options: GenerateBracketOptions
       
       const match: BracketMatch = {
         id: currentMatchId,
-        name: `${getRoundName(round + 1, totalRounds)} - Match ${matchIndex + 1}`,
+        name: `${getRoundName(r + 1, totalRounds)} - Match ${i + 1}`,
         nextMatchId,
-        tournamentRoundText: String(round + 1),
+        tournamentRoundText: String(r + 1),
         startTime: startTime ?? new Date().toISOString(),
         state: 'NO_PARTY',
         participants: [participant1, participant2],
@@ -281,8 +286,6 @@ export const generateSingleEliminationBracket = (options: GenerateBracketOptions
       
       matches.push(match)
     }
-    
-    matchIdsByRound.push(roundMatchIds)
   }
   
   return matches
@@ -302,6 +305,132 @@ export const validateBracketIntegrity = (matches: Matches): boolean => {
   }
   
   return true
+}
+
+/**
+ * Verify bracket chain consistency (sibling → parent relationships)
+ * Returns detailed diagnostics for debugging
+ */
+export interface BracketChainResult {
+  ok: boolean
+  errors: string[]
+}
+
+export const verifyBracketChain = (matches: Matches): BracketChainResult => {
+  const errors: string[] = []
+  
+  if (matches.length === 0) {
+    return { ok: true, errors: [] }
+  }
+  
+  // Group matches by round
+  const matchesByRound = new Map<number, BracketMatch[]>()
+  for (const match of matches) {
+    const round = Number(match.tournamentRoundText)
+    if (!matchesByRound.has(round)) {
+      matchesByRound.set(round, [])
+    }
+    matchesByRound.get(round)!.push(match)
+  }
+  
+  const rounds = Array.from(matchesByRound.keys()).sort((a, b) => a - b)
+  const maxRound = Math.max(...rounds)
+  
+  // Build match ID lookup
+  const matchById = new Map<number, BracketMatch>()
+  for (const match of matches) {
+    matchById.set(match.id, match)
+  }
+  
+  // Check each round except the last
+  for (const round of rounds) {
+    const roundMatches = matchesByRound.get(round)!
+    const isLastRound = round === maxRound
+    
+    if (isLastRound) {
+      // Final round: all matches must have nextMatchId = null
+      for (const match of roundMatches) {
+        if (match.nextMatchId !== null) {
+          errors.push(
+            `Final round match #${match.id} has nextMatchId=${match.nextMatchId} (expected null)`
+          )
+        }
+      }
+    } else {
+      // Non-final rounds: check parent relationships
+      const nextRound = round + 1
+      const nextRoundMatches = matchesByRound.get(nextRound)
+      
+      if (!nextRoundMatches) {
+        errors.push(`Round ${round} references next round ${nextRound}, but no matches found`)
+        continue
+      }
+      
+      // Track parent → children mapping
+      const parentChildren = new Map<number, number[]>()
+      
+      for (const match of roundMatches) {
+        if (match.nextMatchId === null) {
+          errors.push(`Round ${round} match #${match.id} has nextMatchId=null (expected valid parent)`)
+          continue
+        }
+        
+        // Check if parent exists
+        const parent = matchById.get(match.nextMatchId)
+        if (!parent) {
+          errors.push(
+            `Invalid parent mapping at round ${round}: match #${match.id} points to non-existent parent #${match.nextMatchId}`
+          )
+          continue
+        }
+        
+        // Check if parent is in next round
+        const parentRound = Number(parent.tournamentRoundText)
+        if (parentRound !== nextRound) {
+          errors.push(
+            `Invalid parent mapping: match #${match.id} (round ${round}) points to parent #${match.nextMatchId} (round ${parentRound}, expected ${nextRound})`
+          )
+        }
+        
+        // Track children
+        if (!parentChildren.has(match.nextMatchId)) {
+          parentChildren.set(match.nextMatchId, [])
+        }
+        parentChildren.get(match.nextMatchId)!.push(match.id)
+      }
+      
+      // Verify each parent has exactly 2 children
+      for (const parentMatch of nextRoundMatches) {
+        const children = parentChildren.get(parentMatch.id) || []
+        if (children.length !== 2) {
+          errors.push(
+            `Parent #${parentMatch.id} (round ${nextRound}) has ${children.length} children (expected exactly 2). Children: [${children.join(', ')}]`
+          )
+        }
+      }
+    }
+  }
+  
+  // Check ID uniqueness
+  const idSet = new Set<number>()
+  for (const match of matches) {
+    if (idSet.has(match.id)) {
+      errors.push(`Duplicate match ID: ${match.id}`)
+    }
+    idSet.add(match.id)
+  }
+  
+  // Check participants length
+  for (const match of matches) {
+    if (match.participants.length !== 2) {
+      errors.push(`Match #${match.id} has ${match.participants.length} participants (expected 2)`)
+    }
+  }
+  
+  return {
+    ok: errors.length === 0,
+    errors,
+  }
 }
 
 /**

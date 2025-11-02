@@ -11,6 +11,7 @@ import {
   AgeGroup,
   DISCIPLINE_VALUES,
   getAgeGroupFromBirthDate,
+  type WeightClass,
 } from '../constants/enums'
 import { clubsRepo, fightersRepo, competitionsRepo } from './repositories'
 
@@ -265,6 +266,29 @@ const generateHeight = (weight: number): number => {
 }
 
 /**
+ * Generate weight within a specific weight class range
+ */
+const generateWeightForClass = (weightClass: WeightClass, gender: Gender): number => {
+  // Parse weight class to get range
+  const match = weightClass.match(/([+-])(\d+)kg/)
+  if (!match) {
+    // Fallback to gender-based weight
+    return gender === Gender.Male ? randomInt(60, 90) : randomInt(50, 70)
+  }
+
+  const [, sign, value] = match
+  const limit = parseInt(value, 10)
+
+  if (sign === '-') {
+    // Under limit: generate weight 2-8kg below limit
+    return randomInt(Math.max(30, limit - 8), limit - 1)
+  } else {
+    // Over limit: generate weight 0-15kg above limit
+    return randomInt(limit, limit + 15)
+  }
+}
+
+/**
  * Generate a realistic fight record based on age group
  */
 const generateRecord = (ageGroup: AgeGroup): { wins: number; losses: number; draws: number } => {
@@ -344,9 +368,11 @@ export const createClub = (overrides?: Partial<Omit<Club, 'id'>>): Club => {
 /**
  * Create a fighter
  */
-export const createFighter = (overrides?: Partial<Omit<Fighter, 'id'>>): Fighter => {
+export const createFighter = (overrides?: Partial<Omit<Fighter, 'id'>> & { ageGroup?: AgeGroup; weightClass?: WeightClass }): Fighter => {
   const gender = overrides?.gender ?? randomPick([Gender.Male, Gender.Female])
-  const ageGroup = randomPick([
+  
+  // Determine age group - either from override or random
+  const targetAgeGroup = overrides?.ageGroup ?? randomPick([
     AgeGroup.U12,
     AgeGroup.U15,
     AgeGroup.U18,
@@ -354,8 +380,20 @@ export const createFighter = (overrides?: Partial<Omit<Fighter, 'id'>>): Fighter
     AgeGroup.Adult,
     AgeGroup.Senior,
   ])
-  const birthDate = overrides?.birthDate ?? generateBirthDate(ageGroup)
-  const weight = overrides?.weight ?? generateWeight(gender, ageGroup)
+  
+  const birthDate = overrides?.birthDate ?? generateBirthDate(targetAgeGroup)
+  
+  // Determine weight - either from override or based on age group/gender
+  let weight: number
+  if (overrides?.weight !== undefined) {
+    weight = overrides.weight
+  } else if (overrides?.weightClass !== undefined) {
+    // Generate weight within the specified weight class range
+    weight = generateWeightForClass(overrides.weightClass, gender)
+  } else {
+    weight = generateWeight(gender, targetAgeGroup)
+  }
+  
   const height = overrides?.height ?? generateHeight(weight)
   const discipline = overrides?.discipline ?? randomPick(DISCIPLINE_VALUES)
 

@@ -6,16 +6,21 @@
 import type { CompetitionFighter } from '../types/Competition'
 import {
   Gender,
-  AgeGroup,
   Discipline,
   DISCIPLINE_VALUES,
-  getAgeGroupFromBirthDate,
-  getWeightClassFromKg,
 } from '../constants/enums'
 import { createClub, createFighter, createCompetition } from './factories'
 import { clubsRepo, fightersRepo, competitionsRepo, bracketsRepo } from './repositories'
-import { generateSingleEliminationBracket } from '../utils/bracketGenerator'
-import type { BracketDivision } from '../types/Bracket'
+import { validateGraph } from './validation'
+import {
+  type SeedConfig as BracketSeedConfig,
+  DEFAULT_SEED_CONFIG,
+  SeededRandom,
+} from './seedConfig'
+import {
+  synthesizeBracketsForCompetition,
+  diagnoseNoBracketReasons,
+} from './bracketSynthesis'
 
 /**
  * Configuration for seed generation
@@ -44,17 +49,6 @@ const DEFAULT_CONFIG: SeedConfig = {
 }
 
 /**
- * Random utility
- */
-const randomInt = (min: number, max: number): number => {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-const randomPick = <T>(arr: T[]): T => {
-  return arr[randomInt(0, arr.length - 1)]
-}
-
-/**
  * Clear all data from localStorage
  */
 export const clearAllData = (): void => {
@@ -79,32 +73,38 @@ export const clearAllData = (): void => {
 }
 
 /**
- * Generate a complete, coherent dataset
+ * Generate a complete, coherent dataset with strong bracket generation
  */
 export const seedAll = (config: Partial<SeedConfig> = {}): void => {
   const cfg = { ...DEFAULT_CONFIG, ...config }
+  const bracketCfg: BracketSeedConfig = {
+    ...DEFAULT_SEED_CONFIG,
+    minCompetitions: cfg.competitions.min,
+  }
 
-  console.log('🌱 Starting seed generation...')
+  console.log('🌱 Starting seed generation with bracket synthesis...')
 
   // Clear existing data
   clearAllData()
 
+  const rng = new SeededRandom(bracketCfg.deterministicSeed)
+
   // 1. Generate clubs
-  const numClubs = randomInt(cfg.clubs.min, cfg.clubs.max)
+  const numClubs = rng.int(cfg.clubs.min, cfg.clubs.max)
   console.log(`📍 Creating ${numClubs} clubs...`)
   const clubs = Array.from({ length: numClubs }, () => createClub())
 
   // 2. Generate fighters
-  const numFighters = randomInt(cfg.fighters.min, cfg.fighters.max)
+  const numFighters = rng.int(cfg.fighters.min, cfg.fighters.max)
   console.log(`🥊 Creating ${numFighters} fighters...`)
 
   // Distribute fighters across age groups and genders
   const genders = [Gender.Male, Gender.Female]
 
   const fighters = Array.from({ length: numFighters }, () => {
-    const club = randomPick(clubs)
-    const gender = randomPick(genders)
-    const discipline = randomPick(club.disciplines)
+    const club = rng.pick(clubs)
+    const gender = rng.pick(genders)
+    const discipline = rng.pick(club.disciplines)
 
     return createFighter({
       clubId: club.id,
@@ -119,43 +119,41 @@ export const seedAll = (config: Partial<SeedConfig> = {}): void => {
   )
 
   // 3. Generate competitions
-  const numCompetitions = randomInt(cfg.competitions.min, cfg.competitions.max)
+  const numCompetitions = rng.int(cfg.competitions.min, cfg.competitions.max)
   console.log(`🏆 Creating ${numCompetitions} competitions...`)
 
   const competitions = Array.from({ length: numCompetitions }, (_, idx) => {
     // Distribute competitions across time (past, ongoing, upcoming)
     let startDaysOffset: number
     if (idx % 3 === 0) {
-      startDaysOffset = randomInt(-90, -7) // Past
+      startDaysOffset = rng.int(-90, -7) // Past
     } else if (idx % 3 === 1) {
-      startDaysOffset = randomInt(-3, 3) // Ongoing
+      startDaysOffset = rng.int(-3, 3) // Ongoing
     } else {
-      startDaysOffset = randomInt(7, 180) // Upcoming
+      startDaysOffset = rng.int(7, 180) // Upcoming
     }
 
     const startDate = new Date()
     startDate.setDate(startDate.getDate() + startDaysOffset)
     const endDate = new Date(startDate)
-    endDate.setDate(endDate.getDate() + randomInt(1, 3))
+    endDate.setDate(endDate.getDate() + rng.int(1, 3))
     const registrationDate = new Date(startDate)
-    registrationDate.setDate(registrationDate.getDate() - randomInt(14, 60))
+    registrationDate.setDate(registrationDate.getDate() - rng.int(14, 60))
 
     // Pick 2-4 disciplines for this competition
-    const numDisciplines = randomInt(2, 4)
+    const numDisciplines = rng.int(2, 4)
     const disciplines: Discipline[] = []
     while (disciplines.length < numDisciplines) {
-      const d = randomPick(DISCIPLINE_VALUES)
+      const d = rng.pick(DISCIPLINE_VALUES)
       if (!disciplines.includes(d)) {
         disciplines.push(d)
       }
     }
 
-    // Assign 10-30 fighters to this competition (matching disciplines)
+    // Assign 20-40 fighters to this competition (matching disciplines)
     const eligibleFighters = fighters.filter((f) => disciplines.includes(f.discipline))
-    const numParticipants = Math.min(randomInt(10, 30), eligibleFighters.length)
-    const selectedFighters = eligibleFighters
-      .sort(() => Math.random() - 0.5)
-      .slice(0, numParticipants)
+    const numParticipants = Math.min(rng.int(20, 40), eligibleFighters.length)
+    const selectedFighters = rng.shuffle(eligibleFighters).slice(0, numParticipants)
 
     const competitionFighters: CompetitionFighter[] = selectedFighters.map((f) => ({
       fighterId: f.id,
@@ -171,76 +169,56 @@ export const seedAll = (config: Partial<SeedConfig> = {}): void => {
     })
   })
 
-  // 4. Generate brackets for each competition
+  // 4. Synthesize brackets for each competition
   if (cfg.generateBrackets) {
-    console.log('🌳 Generating brackets...')
-    let totalBrackets = 0
+    console.log('🌳 Synthesizing brackets with automatic backfilling...')
+    
+    let totalBracketsCreated = 0
+    let totalBracketsAttempted = 0
+    let competitionsWithBrackets = 0
 
     competitions.forEach((comp) => {
-      const compFighters = fightersRepo.getByIds(comp.fighters.map((cf) => cf.fighterId))
+      const result = synthesizeBracketsForCompetition(comp.id, bracketCfg)
+      
+      totalBracketsCreated += result.created
+      totalBracketsAttempted += result.attempted
+      
+      if (result.created > 0) {
+        competitionsWithBrackets++
+      }
 
-      // Group fighters by division
-      const divisionMap = new Map<string, number[]>()
-
-      compFighters.forEach((fighter) => {
-        const ageGroup = getAgeGroupFromBirthDate(fighter.birthDate)
-        const weightClass = getWeightClassFromKg(fighter.weight, fighter.gender)
-
-        const divisionKey = `${ageGroup}_${fighter.discipline}_${weightClass}_${fighter.gender}`
-
-        if (!divisionMap.has(divisionKey)) {
-          divisionMap.set(divisionKey, [])
-        }
-        divisionMap.get(divisionKey)!.push(fighter.id)
-      })
-
-      // Create brackets for divisions with 4+ fighters
-      divisionMap.forEach((fighterIds, divisionKey) => {
-        if (fighterIds.length < 4) return // Skip divisions with too few fighters
-
-        const [ageGroup, discipline, weightClass, gender] = divisionKey.split('_')
-
-        const division: BracketDivision = {
-          ageGroup: ageGroup as AgeGroup,
-          discipline: discipline as Discipline,
-          weightClass: weightClass as any,
-          gender: gender as Gender,
-        }
-
-        // Build fighter names map
-        const fighterNames = new Map<number, string>()
-        fighterIds.forEach((id) => {
-          const fighter = compFighters.find((f) => f.id === id)
-          if (fighter) {
-            fighterNames.set(id, `${fighter.firstName} ${fighter.lastName}`)
-          }
+      // Log details
+      if (result.created > 0) {
+        console.log(`  ├─ Competition ${comp.id}: Created ${result.created}/${result.attempted} brackets`)
+      } else {
+        console.log(`  ├─ Competition ${comp.id}: No brackets created`)
+        // Diagnose issues
+        const diagnosis = diagnoseNoBracketReasons(comp.id, bracketCfg)
+        diagnosis.forEach((d) => {
+          console.log(`      └─ ${d.category}:`, d.details.join('; '))
         })
-
-        // Generate bracket with random seeding
-        const matches = generateSingleEliminationBracket({
-          competitionId: comp.id,
-          bracketId: totalBrackets + 1, // Temporary ID (will be replaced)
-          fighterIds,
-          fighterNames,
-          seedMethod: 'random',
-        })
-
-        if (matches.length > 0) {
-          // Create bracket metadata and store
-          const bracket = {
-            division,
-            fighterIds,
-            seedMethod: 'random' as const,
-            status: 'published' as const,
-          }
-
-          bracketsRepo.create(comp.id, bracket, matches)
-          totalBrackets++
-        }
-      })
+      }
     })
 
-    console.log(`  ├─ Generated ${totalBrackets} brackets`)
+    const ratio = competitions.length > 0 ? competitionsWithBrackets / competitions.length : 0
+
+    console.log(`  ├─ Total brackets: ${totalBracketsCreated} (attempted ${totalBracketsAttempted})`)
+    console.log(`  ├─ Competitions with brackets: ${competitionsWithBrackets}/${competitions.length} (${(ratio * 100).toFixed(0)}%)`)
+
+    // If ratio is below target, try backfilling more competitions
+    if (ratio < bracketCfg.targetCompetitionsWithBracketsRatio && competitions.length > 0) {
+      console.log(`⚠️  Bracket ratio ${(ratio * 100).toFixed(0)}% is below target ${(bracketCfg.targetCompetitionsWithBracketsRatio * 100).toFixed(0)}%`)
+      console.log('   Consider increasing fighter count or reducing minFightersPerBracket in config')
+    }
+  }
+
+  // 5. Validate graph integrity
+  console.log('🔍 Validating data graph...')
+  const validation = validateGraph()
+  if (!validation.valid) {
+    console.error('❌ Graph validation failed:')
+    validation.errors.forEach((err) => console.error(`   - ${err}`))
+    throw new Error('Seed generation failed: Graph validation errors detected')
   }
 
   console.log('✅ Seed generation complete!')
@@ -263,8 +241,8 @@ export const seedAll = (config: Partial<SeedConfig> = {}): void => {
 export const seedDev = (): void => {
   seedAll({
     clubs: { min: 5, max: 8 },
-    fighters: { min: 30, max: 50 },
-    competitions: { min: 2, max: 4 },
+    fighters: { min: 40, max: 60 },
+    competitions: { min: 3, max: 5 },
     generateBrackets: true,
   })
 }
@@ -275,8 +253,8 @@ export const seedDev = (): void => {
 export const seedDemo = (): void => {
   seedAll({
     clubs: { min: 12, max: 15 },
-    fighters: { min: 100, max: 120 },
-    competitions: { min: 6, max: 8 },
+    fighters: { min: 120, max: 150 },
+    competitions: { min: 6, max: 10 },
     generateBrackets: true,
   })
 }

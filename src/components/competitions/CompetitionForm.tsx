@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Competition } from '../../types/Competition'
-import { ALL_DISCIPLINES } from '../../constants/disciplines'
+import { BasicInfoSection } from './CompetitionForm/BasicInfoSection'
+import { DatesSection } from './CompetitionForm/DatesSection'
+import { ContactSection } from './CompetitionForm/ContactSection'
+import { DisciplinesSection } from './CompetitionForm/DisciplinesSection'
 
 interface CompetitionFormProps {
   initialData?: Competition
@@ -95,232 +98,36 @@ export const CompetitionForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Basic Information */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">General Information</h3>
-        <div className="grid grid-cols-1 gap-4">
-          {/* Title */}
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              placeholder="Competition title"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-          </div>
+      <BasicInfoSection
+        title={formData.title}
+        location={formData.location}
+        address={formData.address}
+        googleMapsUrl={formData.googleMapsUrl}
+        description={formData.description}
+        errors={errors}
+        onChange={handleChange}
+      />
 
-          {/* Location */}
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-              Location (city/venue)
-            </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="e.g., Iași, Sala Polivalentă"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+      <DatesSection
+        startDate={formData.startDate}
+        endDate={formData.endDate}
+        registrationDate={formData.registrationDate}
+        errors={errors}
+        onChange={handleChange}
+      />
 
-          {/* Address */}
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-              Full Address
-            </label>
-            <input
-              type="text"
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Street, number, postal code, city"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+      <ContactSection
+        contactName={formData.contactName}
+        contactEmail={formData.contactEmail}
+        contactPhone={formData.contactPhone}
+        errors={errors}
+        onChange={handleChange}
+      />
 
-          {/* Google Maps URL */}
-          <div>
-            <label
-              htmlFor="googleMapsUrl"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Google Maps URL (optional)
-            </label>
-            <input
-              type="url"
-              id="googleMapsUrl"
-              name="googleMapsUrl"
-              value={formData.googleMapsUrl}
-              onChange={handleChange}
-              placeholder="https://maps.google.com/?q=..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              placeholder="Describe the competition..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Dates */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Dates</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Start Date */}
-          <div>
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date *
-            </label>
-            <input
-              type="date"
-              id="startDate"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.startDate && <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>}
-          </div>
-
-          {/* End Date */}
-          <div>
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
-              End Date *
-            </label>
-            <input
-              type="date"
-              id="endDate"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>}
-          </div>
-
-          {/* Registration Date */}
-          <div>
-            <label
-              htmlFor="registrationDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Registration Deadline
-            </label>
-            <input
-              type="date"
-              id="registrationDate"
-              name="registrationDate"
-              value={formData.registrationDate}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Contact */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Contact</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Contact Name */}
-          <div>
-            <label htmlFor="contactName" className="block text-sm font-medium text-gray-700 mb-1">
-              Contact Name
-            </label>
-            <input
-              type="text"
-              id="contactName"
-              name="contactName"
-              value={formData.contactName}
-              onChange={handleChange}
-              placeholder="John Doe"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Contact Email */}
-          <div>
-            <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              id="contactEmail"
-              name="contactEmail"
-              value={formData.contactEmail}
-              onChange={handleChange}
-              placeholder="contact@example.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.contactEmail && (
-              <p className="mt-1 text-sm text-red-600">{errors.contactEmail}</p>
-            )}
-          </div>
-
-          {/* Contact Phone */}
-          <div>
-            <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone
-            </label>
-            <input
-              type="tel"
-              id="contactPhone"
-              name="contactPhone"
-              value={formData.contactPhone}
-              onChange={handleChange}
-              placeholder="+40 xxx xxx xxx"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Disciplines */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Disciplines Available</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {ALL_DISCIPLINES.map(discipline => (
-            <label
-              key={discipline}
-              className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
-            >
-              <input
-                type="checkbox"
-                checked={formData.disciplines.includes(discipline as any)}
-                onChange={() => handleDisciplinesChange(discipline)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">{discipline}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <DisciplinesSection
+        selectedDisciplines={formData.disciplines}
+        onDisciplineToggle={handleDisciplinesChange}
+      />
 
       {/* Actions */}
       <div className="flex justify-end gap-4">
