@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate, Outlet, NavLink } from 'react-router-dom'
-import { useCompetitions } from '../../contexts/CompetitionsContext'
+import { useCompetitions } from '../../contexts/RepositoryContext'
 import { isRegistrationOpen } from '../../types/Competition'
 import { getClubDisciplinesEmojis } from '../../utils/getDisciplineEmoji'
 import { getStatusConfig, formatDateShort } from '../../utils/competitions'
@@ -166,6 +166,18 @@ export default function CompetitionDetail() {
                 }
               >
                 Matches
+              </NavLink>
+              <NavLink
+                to={`/competitions/${competition.id}/bracket`}
+                className={({ isActive }) =>
+                  `px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                    isActive
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`
+                }
+              >
+                Bracket
               </NavLink>
             </nav>
           </div>

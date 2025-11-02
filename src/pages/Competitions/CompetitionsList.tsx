@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useCompetitions } from '../../contexts/CompetitionsContext'
+import { useCompetitions } from '../../contexts/RepositoryContext'
 import { CompetitionCard } from '../../components/competitions/CompetitionCard'
 import { getCompetitionStatus } from '../../types/Competition'
 import { ALL_DISCIPLINES } from '../../constants/disciplines'

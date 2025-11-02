@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Match } from '../../types/Match'
 import { getMatchStateLabel, getMatchStateColor } from '../../types/Match'
-import { useFighters } from '../../contexts/FightersContext'
+import { useFighters } from '../../contexts/RepositoryContext'
 import { Edit, Trash2, Trophy, Calendar, MapPin } from 'lucide-react'
 
 type MatchCardProps = {

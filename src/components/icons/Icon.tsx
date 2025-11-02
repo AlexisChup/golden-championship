@@ -7,6 +7,10 @@ type IconName =
   | 'map-pin'
   | 'users'
   | 'close'
+  | 'plus'
+  | 'x'
+  | 'pencil'
+  | 'play'
 
 interface IconProps {
   name: IconName
@@ -49,6 +53,22 @@ const paths: Record<IconName, ReactElement> = {
   ),
   close: (
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  ),
+  plus: (
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+  ),
+  x: (
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  ),
+  pencil: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+    />
+  ),
+  play: (
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
   ),
 }
 

@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useFighters } from '../../contexts/FightersContext'
-import { useClubs } from '../../contexts/ClubsContext'
+import { useFighters, useClubs } from '../../contexts/RepositoryContext'
 import { FighterCard } from '../../components/fighters/FighterCard'
-import { getUniqueDisciplines } from '../../data/fightersData'
+import { Discipline } from '../../constants/enums'
 
 export default function FightersList() {
   const { fighters } = useFighters()
@@ -12,15 +11,7 @@ export default function FightersList() {
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>('all')
   const [selectedClub, setSelectedClub] = useState<string>('all')
 
-  const disciplines = getUniqueDisciplines()
-
-  const handleResetData = () => {
-    if (confirm('Reset local data for Clubs/Fighters?')) {
-      localStorage.removeItem('fighters_data')
-      localStorage.removeItem('clubs_data')
-      window.location.reload()
-    }
-  }
+  const disciplines = Object.values(Discipline)
 
   const filteredFighters = useMemo(() => {
     return fighters.filter(fighter => {
@@ -51,23 +42,12 @@ export default function FightersList() {
                 Browse and manage all registered fighters in the championship
               </p>
             </div>
-            <div className="flex gap-3">
-              {import.meta.env.DEV && (
-                <button
-                  onClick={handleResetData}
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
-                  aria-label="Reset local data"
-                >
-                  Reset Data
-                </button>
-              )}
-              <Link
-                to="/fighters/new"
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-              >
-                + Add Fighter
-              </Link>
-            </div>
+            <Link
+              to="/fighters/new"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+            >
+              + Add Fighter
+            </Link>
           </div>
         </div>
 

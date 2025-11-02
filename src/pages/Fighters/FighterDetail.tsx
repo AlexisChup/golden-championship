@@ -1,6 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useFighters } from '../../contexts/FightersContext'
-import { useClubs } from '../../contexts/ClubsContext'
+import { useFighters, useClubs } from '../../contexts/RepositoryContext'
 import { FighterStats } from '../../components/fighters/FighterStats'
 import { calculateAge, getWeightCategory } from '../../types/Fighter'
 import { Icon } from '../../components/icons/Icon'
@@ -51,15 +50,6 @@ export default function FighterDetail() {
     }
   }
 
-  const handleResetData = () => {
-    if (confirm('Reset local data for Clubs/Fighters?')) {
-      localStorage.removeItem('fighters_data')
-      localStorage.removeItem('clubs_data')
-      localStorage.removeItem('competitions_data')
-      window.location.reload()
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,8 +70,6 @@ export default function FighterDetail() {
             nickname={fighter.nickname}
             fighterId={fighter.id}
             onDelete={handleDelete}
-            showResetButton={import.meta.env.DEV}
-            onReset={handleResetData}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

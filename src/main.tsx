@@ -4,24 +4,18 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from "react-hot-toast"
-import { FightersProvider } from './contexts/FightersContext'
-import { ClubsProvider } from './contexts/ClubsContext'
-import { CompetitionsProvider } from './contexts/CompetitionsContext'
-import { MatchesProvider } from './contexts/MatchesContext'
+import { RepositoryProvider } from './contexts/RepositoryContext'
+
+// Import global seed utilities for browser console access
+import './data/globalUtils'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <FightersProvider>
-        <ClubsProvider>
-          <CompetitionsProvider>
-            <MatchesProvider>
-              <App />
-              <Toaster position="top-right" />
-            </MatchesProvider>
-          </CompetitionsProvider>
-        </ClubsProvider>
-      </FightersProvider>
+      <RepositoryProvider>
+        <App />
+        <Toaster position="top-right" />
+      </RepositoryProvider>
     </BrowserRouter>
   </StrictMode>,
 )

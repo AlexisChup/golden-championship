@@ -2,8 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Fighter } from '../../types/Fighter'
 import { getWeightCategory } from '../../types/Fighter'
-import { useClubs } from '../../contexts/ClubsContext'
+import { useClubs } from '../../contexts/RepositoryContext'
 import { ALL_DISCIPLINES } from '../../constants/disciplines'
+import { Gender } from '../../constants/enums'
 
 interface FighterFormProps {
   initialData?: Fighter
@@ -30,6 +31,7 @@ export const FighterForm = ({
     height: initialData?.height || 0,
     weight: initialData?.weight || 0,
     discipline: initialData?.discipline || 'K1' as const,
+    gender: initialData?.gender || Gender.Male,
     record: {
       wins: initialData?.record.wins || 0,
       losses: initialData?.record.losses || 0,
@@ -192,10 +194,28 @@ export const FighterForm = ({
         </div>
       </div>
 
-      {/* Physical Stats */}
+      {/* Physical Stats & Gender */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Physical Stats</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+              Gender *
+            </label>
+            <select
+              id="gender"
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={Gender.Male}>Men</option>
+              <option value={Gender.Female}>Women</option>
+              <option value={Gender.Open}>Open</option>
+            </select>
+          </div>
+
           <div>
             <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">
               Height (cm) *

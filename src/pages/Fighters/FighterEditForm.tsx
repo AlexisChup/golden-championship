@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useFighters } from '../../contexts/FightersContext'
+import { useFighters } from '../../contexts/RepositoryContext'
 import { FighterForm } from '../../components/fighters/FighterForm'
 import toast from 'react-hot-toast'
 import type { Fighter } from '../../types/Fighter'
@@ -34,9 +34,9 @@ export default function FighterEditForm() {
 
   const handleSubmit = (data: Omit<Fighter, 'id'>) => {
     if (isNew) {
-      const newId = addFighter(data)
+      const newFighter = addFighter(data)
       toast.success('Fighter added successfully!')
-      navigate(`/fighters/${newId}`)
+      navigate(`/fighters/${newFighter.id}`)
     } else {
       updateFighter(Number(id), data)
       toast.success('Fighter updated successfully!')

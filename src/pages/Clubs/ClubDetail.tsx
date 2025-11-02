@@ -1,7 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { useClubs } from '../../contexts/ClubsContext'
-import { useFighters } from '../../contexts/FightersContext'
+import { useClubs, useFighters } from '../../contexts/RepositoryContext'
 import { ClubInfoBlock } from '../../components/clubs/ClubInfoBlock'
 import { ClubFightersList } from '../../components/clubs/ClubFightersList'
 import { FighterForm } from '../../components/fighters/FighterForm'
@@ -52,21 +51,11 @@ export default function ClubDetail() {
       ...fighterData,
       clubId: club.id,
     }
-    const newId = addFighter(newFighterData)
+    const newFighter = addFighter(newFighterData)
     setIsModalOpen(false)
     toast.success(`${fighterData.firstName} ${fighterData.lastName} added to ${club.name}!`)
     // Navigate to the new fighter detail page
-    navigate(`/fighters/${newId}`)
-  }
-
-  const handleResetData = () => {
-    if (confirm('Reset local data for Clubs/Fighters?')) {
-      localStorage.removeItem('fighters_data')
-      localStorage.removeItem('clubs_data')
-      localStorage.removeItem('competitions_data')
-      localStorage.removeItem('matches')
-      window.location.reload()
-    }
+    navigate(`/fighters/${newFighter.id}`)
   }
 
   return (
@@ -115,15 +104,6 @@ export default function ClubDetail() {
               </div>
             </div>
             <div className="flex gap-3">
-              {import.meta.env.DEV && (
-                <button
-                  onClick={handleResetData}
-                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm"
-                  aria-label="Reset local data"
-                >
-                  Reset Data
-                </button>
-              )}
               <Link
                 to={`/clubs/${club.id}/edit`}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -187,6 +167,7 @@ export default function ClubDetail() {
               height: 0,
               weight: 0,
               discipline: 'K1',
+              gender: 'M',
               record: { wins: 0, losses: 0, draws: 0 }
             }}
             onSubmit={handleAddFighter}

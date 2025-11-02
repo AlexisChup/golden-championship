@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useClubs } from '../../contexts/ClubsContext'
-import { useFighters } from '../../contexts/FightersContext'
-import { getUniqueCities } from '../../data/clubsData'
+import { useClubs, useFighters } from '../../contexts/RepositoryContext'
 import { StatsCard } from './components/StatsCard'
 import { ClubsFilters } from './components/ClubsFilters'
 import { ClubsGrid } from './components/ClubsGrid'
@@ -13,15 +11,10 @@ export default function ClubsList() {
   const [selectedCity, setSelectedCity] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'name' | 'city' | 'fighters'>('name')
 
-  const cities = getUniqueCities()
-
-  const handleResetData = () => {
-    if (confirm('Reset local data for Clubs/Fighters?')) {
-      localStorage.removeItem('fighters_data')
-      localStorage.removeItem('clubs_data')
-      window.location.reload()
-    }
-  }
+  const cities = useMemo(() => {
+    const citySet = new Set(clubs.map(c => c.city))
+    return Array.from(citySet).sort()
+  }, [clubs])
 
   // Calculate fighters count for each club based on clubId
   const clubsWithCounts = useMemo(() => {
@@ -77,15 +70,6 @@ export default function ClubsList() {
                 Browse all registered clubs and their affiliated fighters
               </p>
             </div>
-            {import.meta.env.DEV && (
-              <button
-                onClick={handleResetData}
-                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
-                aria-label="Reset local data"
-              >
-                Reset Data
-              </button>
-            )}
           </div>
         </div>
 

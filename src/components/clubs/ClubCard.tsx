@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import type { Club } from '../../types/Club'
 import { formatDisciplines } from '../../types/Club'
 import { getClubDisciplinesEmojis } from '../../utils/getDisciplineEmoji'
-import { useFighters } from '../../contexts/FightersContext'
+import { useFighters } from '../../contexts/RepositoryContext'
 
 interface ClubCardProps {
   club: Club

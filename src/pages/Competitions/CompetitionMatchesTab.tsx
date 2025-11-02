@@ -1,165 +1,42 @@
-import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useOutletContext } from 'react-router-dom'
-import { useMatches } from '../../contexts/MatchesContext'
 import type { Competition } from '../../types/Competition'
-import type { Match, LibraryMatchState } from '../../types/Match'
-import { MatchCard } from '../../components/matches/MatchCard'
-import { MatchFormModal } from '../../components/matches/MatchFormModal'
-import { MatchFilters } from '../../components/matches/MatchFilters'
-import toast from 'react-hot-toast'
 
 export default function CompetitionMatchesTab() {
   const { competition } = useOutletContext<{ competition: Competition }>()
-  const { getMatchesByCompetition, addMatch, updateMatch, deleteMatch } = useMatches()
-  
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingMatch, setEditingMatch] = useState<Match | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [stateFilter, setStateFilter] = useState<LibraryMatchState | ''>('')
-  const [ruleTypeFilter, setRuleTypeFilter] = useState('')
-
-  const competitionMatches = getMatchesByCompetition(competition.id.toString())
-
-  // Filtering
-  const filteredMatches = competitionMatches.filter(match => {
-    // Search filter (match name, participant names, round)
-    const searchLower = searchTerm.toLowerCase()
-    const matchesSearch =
-      match.name.toLowerCase().includes(searchLower) ||
-      match.participants[0].name.toLowerCase().includes(searchLower) ||
-      match.participants[1].name.toLowerCase().includes(searchLower) ||
-      match.tournamentRoundText.toLowerCase().includes(searchLower)
-
-    if (!matchesSearch) return false
-
-    // State filter
-    if (stateFilter && match.state !== stateFilter) return false
-
-    // Rule type filter
-    if (ruleTypeFilter && match.meta?.ruleType !== ruleTypeFilter) return false
-
-    return true
-  })
-
-  // Sorting: by startTime ascending, then by tournamentRoundText
-  const sortedMatches = [...filteredMatches].sort((a, b) => {
-    const timeA = new Date(a.startTime).getTime()
-    const timeB = new Date(b.startTime).getTime()
-    if (timeA !== timeB) return timeA - timeB
-
-    return a.tournamentRoundText.localeCompare(b.tournamentRoundText)
-  })
-
-  // Extract unique rule types for filter
-  const uniqueRuleTypes = Array.from(
-    new Set(competitionMatches.map(m => m.meta?.ruleType).filter(Boolean))
-  ) as string[]
-
-  const handleAddMatch = (matchData: Omit<Match, 'id'>) => {
-    const newId = addMatch(matchData)
-    toast.success(`Match #${newId} created`)
-    setIsModalOpen(false)
-    setEditingMatch(null)
-  }
-
-  const handleUpdateMatch = (matchData: Omit<Match, 'id'>) => {
-    if (!editingMatch) return
-    updateMatch(editingMatch.id, matchData)
-    toast.success(`Match #${editingMatch.id} updated`)
-    setIsModalOpen(false)
-    setEditingMatch(null)
-  }
-
-  const handleDeleteMatch = (id: number) => {
-    if (window.confirm(`Delete Match #${id}?`)) {
-      deleteMatch(id)
-      toast.success(`Match #${id} deleted`)
-    }
-  }
-
-  const handleEditMatch = (match: Match) => {
-    setEditingMatch(match)
-    setIsModalOpen(true)
-  }
-
-  const handleOpenAddModal = () => {
-    setEditingMatch(null)
-    setIsModalOpen(true)
-  }
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setEditingMatch(null)
-  }
-
-  const handleClearFilters = () => {
-    setSearchTerm('')
-    setStateFilter('')
-    setRuleTypeFilter('')
-  }
 
   return (
-    <div className="space-y-4">
-      {/* Header with Add Match Button */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-bold text-gray-900">
-          Matches ({competitionMatches.length})
-        </h3>
-        <button
-          onClick={handleOpenAddModal}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+    <div className="space-y-6">
+      {/* Info Card */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+        <div className="flex justify-center mb-4">
+          <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Matches Now Managed in Brackets</h3>
+        <p className="text-gray-700 mb-4">
+          Matches are now organized within brackets. Create and manage brackets in the Bracket tab,
+          where you can build single-elimination tournaments and track all matches.
+        </p>
+        <Link
+          to={`/competitions/${competition.id}/brackets`}
+          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
-          + Add Match
-        </button>
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          </svg>
+          Go to Brackets
+        </Link>
       </div>
 
-      {/* Modal for Add/Edit Match */}
-      <MatchFormModal
-        competitionUuid={competition.id.toString()}
-        match={editingMatch}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSubmit={editingMatch ? handleUpdateMatch : handleAddMatch}
-      />
-
-      {/* Filters & Search */}
-      <MatchFilters
-        searchTerm={searchTerm}
-        stateFilter={stateFilter}
-        ruleTypeFilter={ruleTypeFilter}
-        availableRuleTypes={uniqueRuleTypes}
-        onSearchChange={setSearchTerm}
-        onStateFilterChange={setStateFilter}
-        onRuleTypeFilterChange={setRuleTypeFilter}
-        onClearFilters={handleClearFilters}
-      />
-
-      {/* Matches List */}
-      {sortedMatches.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-lg">
-            {competitionMatches.length === 0
-              ? 'No matches yet. Add your first match!'
-              : 'No matches match your filters.'}
+      {/* Legacy Note for Dev */}
+      {import.meta.env.DEV && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-sm text-yellow-800">
+            <strong>Dev Note:</strong> The legacy MatchesContext has been removed. All match data
+            is now stored within bracket structures using the bracketsRepo repository.
           </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {sortedMatches.map(match => (
-            <MatchCard
-              key={match.id}
-              match={match}
-              onEdit={handleEditMatch}
-              onDelete={handleDeleteMatch}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Results Summary */}
-      {filteredMatches.length !== competitionMatches.length && (
-        <div className="text-sm text-gray-600 text-center">
-          Showing {sortedMatches.length} of {competitionMatches.length} total matches
         </div>
       )}
     </div>

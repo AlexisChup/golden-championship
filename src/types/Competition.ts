@@ -1,4 +1,5 @@
-import type { Discipline } from './common'
+import type { Discipline, CompetitionStatus } from '../constants/enums'
+import { getCompetitionStatusFromDates } from '../constants/enums'
 
 export interface CompetitionFighter {
   fighterId: number
@@ -22,22 +23,12 @@ export interface Competition {
   fighters: CompetitionFighter[]
 }
 
-// Helper to get competition status based on dates
+// Helper to get competition status based on dates (using centralized enum helper)
 export const getCompetitionStatus = (
   startDate: string,
   endDate: string
-): 'ongoing' | 'upcoming' | 'past' => {
-  const now = new Date()
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-
-  if (now >= start && now <= end) {
-    return 'ongoing'
-  } else if (now < start) {
-    return 'upcoming'
-  } else {
-    return 'past'
-  }
+): CompetitionStatus => {
+  return getCompetitionStatusFromDates(startDate, endDate)
 }
 
 // Helper to check if registration is still open

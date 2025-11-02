@@ -22,6 +22,7 @@
   import CompetitionGeneralInfo from "../pages/Competitions/CompetitionGeneralInfo"
   import CompetitionFightersTab from "../pages/Competitions/CompetitionFightersTab"
   import CompetitionMatchesTab from "../pages/Competitions/CompetitionMatchesTab"
+  import CompetitionBracketTab from "../pages/Competitions/CompetitionBracketTab"
   import CompetitionEditForm from "../pages/Competitions/CompetitionEditForm"
 
   // Pages d'authentification
@@ -30,6 +31,9 @@
 
   // Pages protégées
   import Dashboard from "../pages/Dashboard"
+  
+  // Admin pages
+  import DataManagement from "../pages/Admin/DataManagement"
 
   // Pages légales
   import Terms from "../pages/Terms"
@@ -65,6 +69,7 @@
           <Route path="general-info" element={<CompetitionGeneralInfo />} />
           <Route path="fighters" element={<CompetitionFightersTab />} />
           <Route path="matches" element={<CompetitionMatchesTab />} />
+          <Route path="bracket" element={<CompetitionBracketTab />} />
         </Route>
         <Route path="/competitions/:id/edit" element={<CompetitionEditForm />} />
         
@@ -78,6 +83,9 @@
             <Dashboard />
           </ProtectedRoute>
         } />
+        
+        {/* Admin routes */}
+        <Route path="/admin/data" element={<DataManagement />} />
         
         {/* Pages légales */}
         <Route path="/terms" element={<Terms />} />

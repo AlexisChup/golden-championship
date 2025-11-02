@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useClubs } from '../../contexts/ClubsContext'
+import { useClubs } from '../../contexts/RepositoryContext'
 import { ClubForm } from '../../components/clubs/ClubForm'
 import toast from 'react-hot-toast'
 import type { Club } from '../../types/Club'
@@ -34,9 +34,9 @@ export default function ClubEditForm() {
 
   const handleSubmit = (data: Omit<Club, 'id' | 'fighters'>) => {
     if (isNew) {
-      const newId = addClub(data)
+      const newClub = addClub(data)
       toast.success('Club added successfully!')
-      navigate(`/clubs/${newId}`)
+      navigate(`/clubs/${newClub.id}`)
     } else {
       updateClub(Number(id), data)
       toast.success('Club updated successfully!')

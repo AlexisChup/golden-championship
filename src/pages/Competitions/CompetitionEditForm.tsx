@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useCompetitions } from '../../contexts/CompetitionsContext'
+import { useCompetitions } from '../../contexts/RepositoryContext'
 import { CompetitionForm } from '../../components/competitions/CompetitionForm'
 import toast from 'react-hot-toast'
 import type { Competition } from '../../types/Competition'

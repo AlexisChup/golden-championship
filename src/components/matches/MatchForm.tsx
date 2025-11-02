@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Match, LibraryMatchState, MatchParticipant } from '../../types/Match'
-import { useFighters } from '../../contexts/FightersContext'
+import { useFighters } from '../../contexts/RepositoryContext'
 import { MatchInfoSection } from './MatchInfoSection'
 import { ParticipantFormSection } from './ParticipantFormSection'
 import { MetaFormSection } from './MetaFormSection'

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
-import { useCompetitions } from '../../contexts/CompetitionsContext'
-import { useFighters } from '../../contexts/FightersContext'
+import { useCompetitions, useFighters } from '../../contexts/RepositoryContext'
 import type { Competition, CompetitionFighter } from '../../types/Competition'
 import type { Discipline } from '../../types/common'
 import { ALL_DISCIPLINES } from '../../constants/disciplines'
@@ -11,7 +10,7 @@ import toast from 'react-hot-toast'
 
 export default function CompetitionFightersTab() {
   const { competition } = useOutletContext<{ competition: Competition }>()
-  const { addFighterToCompetition, removeFighterFromCompetition } = useCompetitions()
+  const { updateCompetition } = useCompetitions()
   const { fighters } = useFighters()
   const [showAddFighter, setShowAddFighter] = useState(false)
   const [selectedFighter, setSelectedFighter] = useState<number | ''>('')
@@ -29,7 +28,9 @@ export default function CompetitionFightersTab() {
       discipline: selectedDiscipline as Discipline,
     }
 
-    addFighterToCompetition(competition.id, fighter)
+    updateCompetition(competition.id, {
+      fighters: [...competition.fighters, fighter],
+    })
     toast.success('Fighter added')
     setSelectedFighter('')
     setSelectedDiscipline('')
@@ -43,7 +44,11 @@ export default function CompetitionFightersTab() {
         `Remove ${fighterData?.firstName} ${fighterData?.lastName} (${fighter.discipline})?`
       )
     ) {
-      removeFighterFromCompetition(competition.id, fighter)
+      updateCompetition(competition.id, {
+        fighters: competition.fighters.filter(
+          (f) => !(f.fighterId === fighter.fighterId && f.discipline === fighter.discipline)
+        ),
+      })
       toast.success('Fighter removed')
     }
   }

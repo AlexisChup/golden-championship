@@ -8,8 +8,6 @@ interface FighterHeaderProps {
   nickname?: string
   fighterId: number
   onDelete: () => void
-  showResetButton?: boolean
-  onReset?: () => void
 }
 
 export const FighterHeader = memo(({
@@ -17,9 +15,7 @@ export const FighterHeader = memo(({
   lastName,
   nickname,
   fighterId,
-  onDelete,
-  showResetButton = false,
-  onReset
+  onDelete
 }: FighterHeaderProps) => {
   return (
     <div className="flex justify-between items-start mb-6">
@@ -32,15 +28,6 @@ export const FighterHeader = memo(({
         )}
       </div>
       <div className="flex gap-3">
-        {showResetButton && onReset && (
-          <button
-            onClick={onReset}
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm"
-            aria-label="Reset local data"
-          >
-            Reset Data
-          </button>
-        )}
         <Link to={`/fighters/${fighterId}/edit`}>
           <Button variant="primary" size="md">
             Edit

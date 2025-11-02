@@ -1,4 +1,4 @@
-import type { Discipline } from './common'
+import type { Discipline, Gender } from '../constants/enums'
 
 export type WeightCategory = 'Lightweight' | 'Middleweight' | 'Heavyweight'
 
@@ -19,6 +19,7 @@ export interface Fighter {
   height: number // in cm
   weight: number // in kg
   discipline: Discipline
+  gender: Gender // Added for bracket filtering
   record: FighterRecord
   imageUrl?: string // optional profile image
 }

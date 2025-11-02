@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useFighters } from '../../contexts/FightersContext'
+import { useFighters } from '../../contexts/RepositoryContext'
 import { calculateAge, getWeightCategory, formatRecord, getRecordColor } from '../../types/Fighter'
 
 interface ClubFightersListProps {
